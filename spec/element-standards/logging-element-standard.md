@@ -1,0 +1,2 @@
+# Logging Element Standard
+
