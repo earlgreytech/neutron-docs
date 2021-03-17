@@ -16,7 +16,8 @@
 
 ## Specification <a id="spec"></a>
 
-* [Overview](spec/overview.md)
+* [Spec Overview](spec/overview.md)
+* [Spec Components](spec/spec-components.md)
 * [Element Standards](spec/element-standards/README.md)
   * [Logging Element Standard](spec/element-standards/logging-element-standard.md)
 
