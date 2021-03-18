@@ -167,7 +167,7 @@ The NeutronVersion field is defined as so, in Rust:
 
 ```text
 pub struct NeutronVersion{
-    pub format/reserved: u8,
+    pub format_reserved: u8,
     pub root_vm: u8,
     pub vm_version: u8,
     pub blockchain_version: u8
@@ -179,7 +179,7 @@ Format shall always be 0 but may be given additional meaning in future versions.
 root\_vm shall be one of the following values:
 
 * 0 -- Reserved
-* 1 -- Non-contract address \(reserved/platform dependent\)
+* 1 -- Non-Neutron address \(reserved/platform dependent\)
 * 2 -- x86 \(reserved\)
 * 3 -- Neutron EVM \(reserved\)
 * 4 -- WASM \(reserved\)
@@ -188,12 +188,15 @@ root\_vm shall be one of the following values:
 
 A root\_vm value with the top bit set \(greater than 127\) shall be reserved for platform specific VMs which are not portable between other platforms.
 
-vm\_version shall currently be 0, indicating "latest VM", but may be used in the future for additional features. There is an exclusion for this vm\_version guideline for the Non-contract address root VM. Specifically, it is expected the vm\_version is used with this root VM in order to express different platform dependent addresses. For a Bitcoin style contract, this includes the following definitions:
+vm\_version shall currently be 0, indicating "latest VM", but may be used in the future for additional features. There is an exclusion for this vm\_version guideline for the Non-contract address root VM. Specifically, it is expected the vm\_version is used with this root VM in order to express different platform dependent addresses. For a Bitcoin based platform, this includes the following definitions:
 
 * 0 -- pay-to-pubkeyhash
 * 1 -- pay-to-scripthash
 
-blockchain\_version has no explicit meaning within Neutron, and is platform-defined.
+blockchain\_version has no explicit meaning within Neutron, and is platform-defined, however these values are recommended:
+
+* 0 -- main net blockchain
+* 1 or greater -- test net blockchain
 
 Proposed flags:
 
@@ -207,14 +210,14 @@ Note it is possible to modify ContractType after a smart contract has been deplo
 
 Finally, the DeploymentInfo structure is data which is determined at deployment time of a smart contract and can otherwise not be modified.
 
-* InitialDeploymentHash: u256 -- A hash of the data which was used for the deployment of a transaction. Includes things like NeutronVersion, hypervisor specific data, and constructor input data. Used for "sub" contract deployment address generation
-* DeployedFrom: UniversalShortAddress -- The responsible party or contract for this address. For "responsible party", the first spent UTXO is used as the "creator". For a smart contract, the smart contract which directly made the Element API call to create or clone this contract. 
+* `InitialDeploymentHash: u256` -- A hash of the data which was used for the deployment of a transaction. Includes things like NeutronVersion, hypervisor specific data, and constructor input data. Used for "sub" contract deployment address generation
+* `DeployedFrom: NeutronAddress` -- The responsible party or contract for this address. For a smart contract, the smart contract which directly made the Element API call to create or clone this contract. For deployments from non-contracts, the exact value here is platform-defined. 
 
 The DeploymentInfo state will be held in the key: `00 03`
 
-The InitialDeploymentHash uses the NeutronABI "flat" variant for constructing the hash. Specifically, it takes the entire stack at the time of smart contract construction, converts it into NeutronABI Flat variant data, and then hashes the resulting data. Thus, it is essential for consistency to ensure that extra items are not on the stack when a smart contract is created, as this will also be included into this hash.
+The InitialDeploymentHash uses the NeutronABI "flat" variant for constructing the hash. Specifically, it takes the entire CoMap \(sorted byte-wise from 0 as first to 255 as highest\) at the time of smart contract construction, converts it into NeutronABI Flat variant data, and then hashes the resulting data. Thus, it is essential for consistency to ensure that extra items are not on the CoMap when a smart contract is created, as this will also be included into this hash.
 
-Noteably, these built-in state keys should not be trimmed for rent purposes, unless the contract bytecode itself is completely removed from state.
+Notably, these built-in state keys should not be trimmed for rent purposes, unless the contract bytecode itself is completely removed from state, such as in a self-destruct operation
 
 ### NeutronVersion within NeutronAddress
 
