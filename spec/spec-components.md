@@ -196,7 +196,7 @@ vm\_version shall currently be 0, indicating "latest VM", but may be used in the
 blockchain\_version has no explicit meaning within Neutron, and is platform-defined, however these values are recommended:
 
 * 0 -- main net blockchain
-* 1 or greater -- test net blockchain
+* 128 or greater -- test net blockchain
 
 Proposed flags:
 
