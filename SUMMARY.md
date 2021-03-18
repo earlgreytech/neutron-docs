@@ -12,7 +12,7 @@
 
 ## Neutron Contributor Info
 
-* [Getting Started](neutron-contributor-info/untitled.md)
+* [Getting Started](neutron-contributor-info/getting-started.md)
 
 ## Specification <a id="spec"></a>
 
