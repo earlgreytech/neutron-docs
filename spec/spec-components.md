@@ -68,9 +68,7 @@ Functions:
 
 ### CoStack and CoMap meta info
 
-CoStack and CoMap data structures should be handled by the same overall interface/structure, NeutronManager
-
-It shall be possible to get some info about the CoStack and CoMap structures
+CoStack and CoMap data structures may be handled by the same overall interface/structure. It shall be possible to get some info about the CoStack and CoMap structures
 
 * `remaining_memory() -> size`
 * `remaining_stack_items() -> count`
@@ -82,7 +80,7 @@ Along with contract accessible data, there is also hidden various functions whic
 * `peek_context(index) -> context` -- this will get the context at the specified index in the stack
 * `pop_context() -> context` -- this will destroy the current context and return it's content
 * `context_count() -> count` -- this will return the total number of contexts currently held
-* `comap_released() -> bool` -- \(ElementAPI use only\) indicates if the caller has released access to the comaps
+* `comap_released() -> bool` -- \(ElementAPI use only, TBD\) indicates if the caller has released access to the comaps
 
 Each context is an item in the call stack and represents an execution of a smart contract.
 
@@ -95,7 +93,7 @@ Constants used:
 
 ### Neutron Call System
 
-This is more informally called the "Neutron Core". It is what works together with CoStack to facilitate all intercommunication between smart contracts and different ElementAPIs and thus the final underlying blockchain.
+The Neutron Call System is what works together with CoStack to facilitate all intercommunication between smart contracts and different ElementAPIs and thus the final underlying blockchain.
 
 The Call System can be called from other Elements or from smart contract code. Calling it from an external interface uses a simple interface consisting of 2 inputs \(arguments\) and 2 outputs \(results\).
 
@@ -107,22 +105,22 @@ Inputs:
 Outputs:
 
 * `Result, u32` -- The result code. In Rust implementations, errors are handled so that it appears to give 2 outputs, one with a non-error result and one with an error result
-* `Non-recoverable, bool` -- If this is set, then an error has occurred which means that the entire smart contract execution \(including any further up contexts\) must immediately terminate, reverting all state. This can happen as a result of reading out of state rent, or encountering an "impossible" error within some Neutron Infrastructure.
+* `Unrecoverable, bool` -- If this is set, then an error has occurred which means that the entire smart contract execution \(including any further up contexts\) must immediately terminate, reverting all state. This can happen as a result of reading out of state rent, or encountering an "impossible" error within some Neutron Infrastructure.
 
 From this, the interface would appear quite limited, however, additional arguments, results, and data can be passed using the CoStack, which are shared between both the caller and callee.
 
-There is a standard for ElementIDs and FunctionIDs. Specifically, if the top bit is set on either an ElementID or FunctionID \(ie, greater than `0x8000_0000`\) then the Element or Function is considered to be a non-standard one. This would mean that these elements/functions are not expected to be shared or implemented in any other blockchain. In addition the FunctionID of 0 is reserved. This is used to test if a particular ElementID is available. The element should return a result of 0 or greater if it exists. It should otherwise return an element does not exist error code.
+There is a standard for ElementIDs and FunctionIDs. Specifically, if the top bit is set on either an ElementID or FunctionID \(ie, greater than `0x8000_0000`\) then the Element or Function is considered to be a platform specific one. This would mean that these elements/functions are not expected to be shared or implemented in any other blockchain. In addition the FunctionID of 0 is reserved. This is used to test if a particular ElementID is available. The element should return a result of 0 or greater if it exists. It should otherwise return an element does not exist error code.
 
-There is no standard for result codes, but anything greater than or equal to `0x8000_0000` is regarded as an error. This could include errors such as reading a stack item that doesn't exist, running out of gas, etc. In some cases this may cause the current smart contract execution to terminate, but will not cause a chain of terminations up the context stack like a non-recoverable error would.
+There is no standard for result codes, but anything greater than or equal to `0x8000_0000` is regarded as an error. This could include errors such as reading a stack item that doesn't exist, running out of gas, etc. In some cases this may cause the current smart contract execution to terminate, but will not cause a chain of terminations up the context stack like an unrecoverable error would.
 
 The other interfaces beyond actual Element calls include:
 
 * Logging interface, for logging errors, info, debug messages, etc.
 * Tracking of block height or another mechanism which is used to determine what Elements and features are currently available to smart contracts \(ie, to handle forks\)
 * Initial loading of state data for smart contract bytecode
-* Blockchain-specific methods of beginning the execution of a smart contract VM
+* Platform-specific methods of beginning the execution of a smart contract VM
 
-The Call System is regarded as a "blockchain provided component". This means that each blockchain implementation will provide it's own version of the Call System. In actual implementation terms, there may be a lot of borrowed code through interfaces, traits, classes, etc. However, the Call System needs to be aware of several pieces of blockchain specific information.
+The Call System is regarded as a "platform provided component". This means that each blockchain implementation will provide its own version of the Call System. In actual implementation terms, there may be a lot of borrowed code through interfaces, traits, classes, etc. However, the Call System needs to be aware of several pieces of platform specific information.
 
 The specific responsibilities of the Call System includes:
 
@@ -130,12 +128,12 @@ The specific responsibilities of the Call System includes:
 * Tracking the block height and which Elements are enabled at any one time within the blockchain
 * How to load smart contract bytecode from the consensus database
 * How to write smart contract bytecode into the consensus database, optionally \(ie, if the blockchain provides a proper writeable database\)
-* Initiates the top level execution into a smart contract \(ie, to translate from a received transaction on the blockchain into a smart contract execution\)
+* Initiates the top level execution into a smart contract \(ie, to translate from a received transaction on a blockchain into a smart contract execution\)
 * Tracks the different VM hypervisors and interprets smart contract external calls to call the appropriate VM
 * Implements the logging system used by other Element components for informative messages which are not tracked for consensus purposes
 * Handles checkpoints \(if implementing a database\) within the state database to properly allow for reverting state in the case of errors
 
-The CallSystem is implemented in the Rust reference implementation in such a way that reentrant calls into the same ElementAPI are impossible. For instance, if a custom method was implemented on GlobalState called "store\_bytecode\_upgrade\_result" and this ended up calling a custom BytecodeUpgrade element which then further called GlobalState again to use store\_state, then the this would result in an error. This is not a strictly defined behavior, but given the complexities that could be introduced by such reentrancy, it's highly discouraged for other implementations of Neutron to allow such behavior.
+The CallSystem is implemented in the Rust reference implementation in such a way that reentrant calls into the same ElementAPI are impossible. For instance, if a custom method was implemented on GlobalState called "store\_bytecode\_upgrade\_result" and this ended up calling a custom BytecodeUpgrade element which then further called GlobalState again to use store\_state, then the this would result in an error. This is not a strictly defined behavior, but given the complexities that could be introduced by such reentrancy, it is not recommended for other implementations of Neutron to allow such behavior.
 
 ### Neutron Hypervisor
 

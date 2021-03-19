@@ -51,7 +51,7 @@ These are the informal goals of the final Neutron system which is to guide its d
 These are features or goals that will not be the target of the current specification and potentially not handled by Neutron ever.
 
 * Increasing overall transaction capacity of Qtum or other blockchains \(ie, increase in block size, faster blocks, etc\)
-* Second Layer Technology will not be designed specifically as part of Neutron, though it is expected to cover some potential example cases to justify a Neutron feature
+* Second Layer Technology will not be designed specifically as part of Neutron, though this spec is expected to cover some potential example cases involving layer 2 technology to justify a Neutron feature
 
 ## Specification Language
 
