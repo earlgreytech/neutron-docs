@@ -53,3 +53,7 @@ These are features or goals that will not be the target of the current specifica
 * Increasing overall transaction capacity of Qtum or other blockchains \(ie, increase in block size, faster blocks, etc\)
 * Second Layer Technology will not be designed specifically as part of Neutron, though it is expected to cover some potential example cases to justify a Neutron feature
 
+## Specification Language
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119.](https://www.ietf.org/rfc/rfc2119.txt)
+

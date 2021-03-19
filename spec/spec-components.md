@@ -2,11 +2,10 @@
 
 ## Component Detail
 
-The following components will be included within this spec:
-
 * CoMap -- a set of communication maps for smart contracts talking primarily to external smart contracts and vice versa, an integral piece of NeutronABI specifications
 * CoStack -- a set of communication stacks for smart contracts talking to Neutron Elements and vice versa, an integral piece of ElementABI specifications
 * CoData -- The CoMap and CoStack data structures, named as a whole together.
+* VMManager -- This components keeps track of the various VMs and their hypervisors, allowing for Neutron to use multiple virtual machines
 * Neutron Hypervisor -- a hypervisor is what mediates between the smart contract executing within a VM and the Neutron Call System and CoData.
 * Neutron ARM Hypervisor -- The specific working mechanisms of the ARM VM hypervisor will be included
 * NARM VM -- The specifications for the ARM VM itself will be included here for posterity, even though it may not exactly belong here. 
@@ -50,7 +49,7 @@ Functions:
 * `get_incoming_transfer_value(address: NeutronAddress, id: u64) -> value: u64`
 * `get_incoming_transfer_info(index: u32) -> (address: NeutronAddress, id: u64)` -- note, both output parameters use the costack
 
-Note: most hypervisors are expected to include max length, beginning index, etc parameters to allow for easier subset access to each piece of data within the comaps
+Note: most hypervisors are expected to include max length, beginning index, etc parameters to allow for easier subset access to each piece of data within the comaps without needing to copy more data than necessary into the VM memory. Hypervisors may allow direct access to comap functionality, or may require the usage of the CoStack in order to load the data indirectly into the VM
 
 ### CoStack
 
@@ -61,8 +60,8 @@ Unlike CoMaps, there is only one instance of the two CoStacks. In other words, C
 Functions:
 
 * `push_stack_output(data)`
-* `pop_stack_input(data)`
-* `peek_stack_input(data)`
+* `pop_stack_input() -> data`
+* `peek_stack_input() -> data`
 * `clear_stacks()` -- clears both input and output stacks. Might later be rewarded with a gas refund for doing this
 * `pop_stack_into_output_comap()`
 * `pop_stack_into_output_stack()`
@@ -90,7 +89,7 @@ Each context is an item in the call stack and represents an execution of a smart
 Constants used:
 
 * `CODATA_MAX_ELEMENT_SIZE` -- proposed, 64Kb. This is the maximum size of a single stack item on the CoData. This limit has broad effects on ABI design, hypervisor implementation, and internal communications. Thus it would be extremely difficult to change after the fact.
-* `CODATA_MAX_TOTAL_MEMORY` -- proposed, 2Mb. This is the maximum size of all elements on the stack put together, excluding context stack info. This determines the overall maximum amount of memory that can be consumed by the CoData. This would be hard coded into various pieces of infrastructure, and so reducing it after the fact will be extremely difficult. However, it can easily be made larger with minimal code changes.
+* `CODATA_MAX_TOTAL_MEMORY` -- proposed, 2Mb. This is the maximum size of all elements on the stack put together, excluding context stack info. This determines the overall maximum amount of memory that can be consumed by the CoData. This would be hard coded into various pieces of infrastructure, and so reducing it after the fact will be extremely difficult. However, it can easily be made larger without breaking compatibility
 * `CODATA_MAX_ELEMENT_COUNT` -- proposed, 256. This is the maximum number of elements that can be held on the stack. As with total memory, this is hard to make smaller after being set, but easy to make larger
 * `CONTEXT_STACK_MAX_COUNT` -- proposed, 128. This is the total number of different contexts which can be held. It is expected that gas costs will prevent exceeding the actual count here, as each context added equates to a new VM instance and new call operation.
 
@@ -148,78 +147,5 @@ A Neutron Hypervisor is a component which exposes an interface for Neutron to a 
 
 There is additional "typical" responsibilities such as entry point handling, memory allocation, etc. However, these are highly variable between the different types of potential smart contract VMs. Neutron is built to allow for many different types of VMs and so there are minimal demands on this specific component to accommodate this goal.
 
-### Built-in State
-
-Whatever method by which Global Storage is implemented, there is a requirement for permanent \(ie, not affected by rent\) fields which indicate the overall characteristics and status of each smart contract deployed to the blockchain. This is standardized for the entire NeutronSystem and each hypervisor/VM must follow this standard. Specifically, any state with the prefix of `00` must be Neutron standardized data. Hypervisors should use a different prefix for internal data, bytecode, etc.
-
-The state at key `00 00` will contain the ContractInfo structure.
-
-The state at key `00 01` will contain the DeploymentInfo structure.
-
-The ContractInfo field will contain the following information:
-
-* `NeutronVersion` -- Indicates which VM etc to execute and any VM specific version info
-* `VMExtra: u16` -- Extra flags etc data which may be used by specific VMs/hypervisors
-* `Flags: u8` -- Various flags for it's execution which do not rely on the hypervisor/VM type.
-* `UpgradeCount: u32` -- tracks the number of time bytecode/data upgrades have occured within the contract
-
-The NeutronVersion field is defined as so, in Rust:
-
-```text
-pub struct NeutronVersion{
-    pub format_reserved: u8,
-    pub root_vm: u8,
-    pub vm_version: u8,
-    pub blockchain_version: u8
-}
-```
-
-Format shall always be 0 but may be given additional meaning in future versions.
-
-root\_vm shall be one of the following values:
-
-* 0 -- Reserved
-* 1 -- Non-Neutron address \(reserved/platform dependent\)
-* 2 -- x86 \(reserved\)
-* 3 -- Neutron EVM \(reserved\)
-* 4 -- WASM \(reserved\)
-* 5 -- ARM
-* 6 -- RISC-V \(reserved\)
-
-A root\_vm value with the top bit set \(greater than 127\) shall be reserved for platform specific VMs which are not portable between other platforms.
-
-vm\_version shall currently be 0, indicating "latest VM", but may be used in the future for additional features. There is an exclusion for this vm\_version guideline for the Non-contract address root VM. Specifically, it is expected the vm\_version is used with this root VM in order to express different platform dependent addresses. For a Bitcoin based platform, this includes the following definitions:
-
-* 0 -- pay-to-pubkeyhash
-* 1 -- pay-to-scripthash
-
-blockchain\_version has no explicit meaning within Neutron, and is platform-defined, however these values are recommended:
-
-* 0 -- main net blockchain
-* 128 or greater -- test net blockchain
-
-Proposed flags:
-
-* Upgradeable -- Can update it's own deployed bytecode
-* Stateless -- The contract can store no global storage state, aside from it's own bytecode. Noteably it can read external smart contract state and cause mutable side effects in other smart contracts by calling them
-* PureContract -- Every execution of this smart contract should be assumed to be pure, with no side effects. \(requires Upgradeable, Stateless, and NonPayable flag\)
-* NonPayable -- This smart contract should never be capable of holding coins
-* \(Proposed/platform dependent\) ApprovalContract -- Only valid on bare contract executions. Indicates that the execution will opt-in for ApprovalContract behavior
-
-Note it is possible to modify ContractType after a smart contract has been deployed by an upgrade. This allows for a single address to be used even when a smart contract undertakes a radical upgrade such as using a different VM for bytecode execution.
-
-Finally, the DeploymentInfo structure is data which is determined at deployment time of a smart contract and can otherwise not be modified.
-
-* `InitialDeploymentHash: u256` -- A hash of the data which was used for the deployment of a transaction. Includes things like NeutronVersion, hypervisor specific data, and constructor input data. Used for "sub" contract deployment address generation
-* `DeployedFrom: NeutronAddress` -- The responsible party or contract for this address. For a smart contract, the smart contract which directly made the Element API call to create or clone this contract. For deployments from non-contracts, the exact value here is platform-defined. 
-
-The DeploymentInfo state will be held in the key: `00 03`
-
-The InitialDeploymentHash uses the NeutronABI "flat" variant for constructing the hash. Specifically, it takes the entire CoMap \(sorted byte-wise from 0 as first to 255 as highest\) at the time of smart contract construction, converts it into NeutronABI Flat variant data, and then hashes the resulting data. Thus, it is essential for consistency to ensure that extra items are not on the CoMap when a smart contract is created, as this will also be included into this hash.
-
-Notably, these built-in state keys should not be trimmed for rent purposes, unless the contract bytecode itself is completely removed from state, such as in a self-destruct operation
-
-### NeutronVersion within NeutronAddress
-
-NeutronAddress contains the NeutronVersion but the version info specified should not be used for determining the VM to use,
+### 
 
