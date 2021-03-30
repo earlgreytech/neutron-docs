@@ -47,6 +47,22 @@ The list of operations supported by ARM Service Calls are:
 
 Note all operations here unless specified are classified as "pure". "variable" means that the type of operation may be pure or another type depending on exact arguments etc.
 
+For the mixing of registers and the CoStack in hypervisor system calls, consider this example:
+
+`function(arg1, arg2, stack arg3, stack arg4) -> (result1, result2, stack result3, stack result4)`
+
+This function would be used from the smart contract like so:
+
+* r0 = arg1
+* r1 = arg2
+* push arg3
+* push arg4
+* call\_function\(\)
+* r0 = result1
+* r1 = result2
+* pop result3
+* pop result4
+
 Misc:
 
 * SVC 0x00: nop -- Always considered a no-operation with no modifications to CPU state
