@@ -4,7 +4,9 @@ This element provides a basic method of accessing a global storage mechanism for
 
 ABI Information
 
-Element ID: 2 Type: Neutron Standard Provision: Absolutely required for Neutron to operate
+* Element ID: 2 
+* Type: Neutron Standard 
+* Provision: Absolutely required for Neutron to operate
 
 Mandatory Internal Functions: -- These are not exposed through the smart contract interface, but are required throughout Neutron infrastructure, including by hypervisors and for token operations. Since this is not exposed through the smart contract interface, this is not a fixed interface, but the capabilities of these functions should be available to external Elements and hypervisors
 

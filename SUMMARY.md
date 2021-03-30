@@ -25,7 +25,8 @@
 * [NeutronDB](spec/neutrondb.md)
 * [Element Standards](spec/element-standards/README.md)
   * [Elements Summary](spec/element-standards/elements-summary.md)
-  * [8 - Cryptographic Hashing Element](spec/element-standards/8-cryptographic-hashing-element.md)
+  * [1 - Blockchain Info Element](spec/element-standards/1-blockchain-info-element.md)
   * [DRAFT - 2 - Global State Element](spec/element-standards/draft-2-global-state-element.md)
   * [4 - Diagnostic Element](spec/element-standards/logging-element-standard.md)
+  * [8 - Cryptographic Hashing Element](spec/element-standards/8-cryptographic-hashing-element.md)
 

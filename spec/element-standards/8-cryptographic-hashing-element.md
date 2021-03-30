@@ -4,7 +4,9 @@ This element provides cryptographic one-way hashing algorithms for use within sm
 
 ABI Information
 
-Element ID: 8 Type: Neutron Standard Provision: Mandatory
+* Element ID: 8 
+* Type: Neutron Standard 
+* Provision: Mandatory
 
 Standard Functions:
 

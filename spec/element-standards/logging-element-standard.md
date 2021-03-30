@@ -4,7 +4,9 @@ This element provides basic generic information about the current blockchain the
 
 ABI Information
 
-Element ID: 4 Type: Neutron Standard Provision: Mandatory in all Neutron implementations. If chosen to not be supported, then these functions should be a no-op which only clears the stacks of inputs, but still must be included in the Neutron integration
+* Element ID: 4 
+* Type: Neutron Standard 
+* Provision: Mandatory in all Neutron implementations. If chosen to not be supported, then these functions should be a no-op which only clears the stacks of inputs
 
 Standard Functions:
 
