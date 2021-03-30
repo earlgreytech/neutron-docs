@@ -12,7 +12,7 @@ pub struct NeutronAddress{
 }
 ```
 
-The version is broken into the following structure \(from top bit to bottom\) :
+The `type_info` field is broken into the following structure \(from top bit to bottom\) :
 
 * Reserved: 3 bits \(must be 0\)
 * Platform Defined: 5 bits
@@ -135,30 +135,37 @@ The state at key `00 00` will contain the ContractInfo structure.
 
 The ContractInfo field will contain the following information:
 
-* `VMVersion: u16` -- Indicates which VM etc to execute and any VM specific version info
-* `VMExtra: u16` -- Extra flags etc data which may be used by specific VMs/hypervisors
-* `Flags: u16` -- Various flags for it's execution which do not rely on the hypervisor/VM type.
+* `ExecutorInfo: u64` -- Consists of info for which VM to use, execution flags, etc.
 * `InitialDeploymentHash: u256` -- this is a hash of the original constructor arguments and other data used to deploy the contract. This value is not changed by bytecode upgrades. Immutable
 * `Creator: NeutronAddress` -- This is the address which originally caused the contract to be created. Can be either a platform native address or Neutron smart contract address. Immutable
 * `UpgradeCount: u32` -- tracks the number of time bytecode/data upgrades have occured within the contract.
 
-VMVersion is composed of the following fields:
+The `ExecutionInfo` field is composed as a structure like so:
 
-* Neutron VM Type: 8 bits \(same as the field `target` in AddressType with the top bit set to 0\)
-* VM Version: 8 bits -- Specifies which VM version was used when this contract was deployed. If the top bit is set to 1, then this specific VM version will be used for future executions \(if supported by the platform\). Otherwise, the latest version of the VM will be used. 
+```text
+pub struct ExecutorInfo{
+    pub vm_target: u8, //same as the target field in AddressType with top bit set to 0
+    pub vm_version: u8,
+    pub vm_extra: u16
+    pub flags: u16
+    pub reserved: u16
+}
+```
 
-The VMExtra field is dependent on each VM/Hypervisor to define and is currently reserved with no immediate use.
+The `vm_version` field specifies which VM version was used when this contract was deployed. If the top bit is set to 1, then this specific VM version will be used for future executions \(if supported by the platform, otherwise an error must be generated preventing deployment\). Otherwise, the latest version of the VM will be used. When this is stored into the database, if the top bit is not 1, then Neutron may update the `vm_version` to match the latest version of the specified `vm_target`
 
-The Flags field has the current proposed meanings:
+The `vm_extra` field is dependent on each VM/Hypervisor to define and is currently reserved with no immediate use.
+
+The `flags` field has the current proposed meanings, but at this point is only a reserved field:
 
 * Upgradeable -- Can update it's own deployed bytecode
 * Stateless -- The contract can store no global storage state, aside from it's own bytecode. Notably it can read external smart contract state and cause mutable side effects in other smart contracts by calling them
 * PureContract -- Every execution of this smart contract should be assumed to be pure, with no side effects. \(requires Upgradeable, Stateless, and NonPayable flag\)
 * NonPayable -- This smart contract should never be capable of holding coins
 
-The UpgradeCount field tracks the number of times that the immutable data of the smart contract has been modified. This can include immutable data, or to change internal metadata such as to change the flags in the ContractInfo field. The UpgradeCount must not be possible to modify directly by smart contract code. 
+The `UpgradeCount` field tracks the number of times that the immutable data of the smart contract has been modified. This can include immutable data, or to change internal metadata such as to change the flags in the ContractInfo field. The UpgradeCount must not be possible to modify directly by smart contract code. 
 
-Note it is possible to modify ContractType after a smart contract has been deployed by an upgrade. This allows for a single address to be used even when a smart contract undertakes a radical upgrade such as using a different VM for bytecode execution.
+Note it is possible to modify `ExecutorInfo` field after a smart contract has been deployed by an upgrade. This allows for a single address to be used even when a smart contract undertakes a radical upgrade such as using a different VM for bytecode execution.
 
 The InitialDeploymentHash uses the NeutronABI "flat" variant for constructing the hash. Specifically, it takes the entire CoMap \(sorted byte-wise from 0 as first to 255 as highest\) at the time of smart contract construction, converts it into NeutronABI Flat variant data, and then hashes the resulting data. Thus, it is essential for consistency to ensure that extra items are not on the CoMap when a smart contract is created, as this will also be included into this hash.
 
