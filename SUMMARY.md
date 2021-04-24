@@ -28,5 +28,6 @@
   * [1 - Blockchain Info Element](spec/element-standards/1-blockchain-info-element.md)
   * [DRAFT - 2 - Global State Element](spec/element-standards/draft-2-global-state-element.md)
   * [4 - Diagnostic Element](spec/element-standards/logging-element-standard.md)
+  * [DRAFT - 3 - External Contract Element API](spec/element-standards/draft-3-external-contract-element-api.md)
   * [8 - Cryptographic Hashing Element](spec/element-standards/8-cryptographic-hashing-element.md)
 
