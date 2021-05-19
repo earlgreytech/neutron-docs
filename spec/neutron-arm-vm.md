@@ -75,6 +75,7 @@ CoStack operations: --note: CoStack functions are limited to 4 u32 register para
 * SVC 0x13: dup\_costack\(\) -- will duplicate the top item on the stack
 * SVC 0x14: costack\_clear\(\) -- Will clear the stack completely, without giving any information about what was held on the stack
 * SVC 0x15: peek\_partial\_costack\(buffer: pointer, begin: u32, max\_size: u32\) -&gt; actual\_amount\_read: u32 -- will read only a partial amount of data from an SCCS item in the middle of the item's data \(starting at 'begin'\)
+* SVC 0x16: move\_input\_to\_output\_costack -- Move all content from input to output stack. Overwrites previous output stack and leaves input stack empty. 
 
 Call System Functions:
 
